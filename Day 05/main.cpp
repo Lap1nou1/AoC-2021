@@ -57,7 +57,7 @@ std::pair<Position, Position> transformLineToVent(const std::string &line) {
 	//On prend y2
 	pos2.y = std::stoi(line.substr(pos));
 
-	//Le premier point sera celui avec la distance de manhattan la plus faible
+	//Le premier point sera celui avec le x le plus petit (et s'ils sont égaux le y le plus petit)
 	std::pair<Position, Position> hydroVent;
 
 	if (pos1.x > pos2.x || (pos1.x == pos2.x && pos1.y > pos2.y)) {

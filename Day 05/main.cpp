@@ -118,10 +118,10 @@ int main() {
 		vents.push_back(transformLineToVent(line));
 	}
 
-	//Maintenant on regarde chaque vents une par une, si c'est une ligne horizontale/verticale on la compare aux autres
+	//Va conserver toutes les intersections de la p1
 	std::set<Position, PointCmp> simpleIntersections;
 
-	//Pour les intersections diagonales
+	//Va conserver toutes les intersections de la p2
 	std::set<Position, PointCmp> diagIntersections;
 	
 	for (std::size_t i = 0; i < vents.size(); i++) {

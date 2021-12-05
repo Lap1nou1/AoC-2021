@@ -5,15 +5,16 @@
 #include <set>
 #include <utility>
 #include <cstdint>
+#include <chrono>
 
 struct Position
 {
-	std::int32_t x;
-	std::int32_t y;
+	float x;
+	float y;
 
-	Position(std::int32_t _x, std::int32_t _y) : x(_x), y(_y) {}
+	Position(float _x, float _y) : x(_x), y(_y) {}
 	Position() : x(0), y(0) {}
-	Position operator*(const std::int32_t& rhs) { return Position(this->x * rhs, this->y * rhs); }
+	Position operator*(const float& rhs) { return Position(this->x * rhs, this->y * rhs); }
 	Position operator+(const Position& rhs) { return Position(this->x + rhs.x, this->y + rhs.y); }
 	bool operator==(const Position& rhs) { return this->x == rhs.x && this->y == rhs.y; }
 	bool operator!=(const Position& rhs) { return this->x != rhs.x || this->y != rhs.y; }
@@ -57,7 +58,7 @@ std::pair<Position, Position> transformLineToVent(const std::string &line) {
 	//On prend y2
 	pos2.y = std::stoi(line.substr(pos));
 
-	//Le premier point sera celui avec le x le plus petit (et s'ils sont égaux le y le plus petit)
+	//Le premier point sera celui avec la distance de manhattan la plus faible
 	std::pair<Position, Position> hydroVent;
 
 	if (pos1.x > pos2.x || (pos1.x == pos2.x && pos1.y > pos2.y)) {
@@ -108,6 +109,9 @@ Position normalizeVector(std::pair<Position, Position>& vent) {
 }
 
 int main() {
+	//On commence le temps
+	auto startTime = std::chrono::steady_clock::now();
+
 	//On charge le fichier
 	std::ifstream inputFile("input.txt");
 
@@ -118,10 +122,10 @@ int main() {
 		vents.push_back(transformLineToVent(line));
 	}
 
-	//Va conserver toutes les intersections de la p1
+	//Maintenant on regarde chaque vents une par une, si c'est une ligne horizontale/verticale on la compare aux autres
 	std::set<Position, PointCmp> simpleIntersections;
 
-	//Va conserver toutes les intersections de la p2
+	//Pour les intersections diagonales
 	std::set<Position, PointCmp> diagIntersections;
 	
 	for (std::size_t i = 0; i < vents.size(); i++) {
@@ -211,8 +215,8 @@ int main() {
 				else {
 					//Vu que x>0 (et donc x=1 dans ce cas), le coefficient directeur des deux droites est le y de leur vecteur normalisé
 					//Donc on calcul les deux p
-					std::int32_t p1 = vent1->first.y - normalizedVent1.y * vent1->first.x;
-					std::int32_t p2 = vent2->first.y - normalizedVent2.y * vent2->first.x;
+					float p1 = vent1->first.y - normalizedVent1.y * vent1->first.x;
+					float p2 = vent2->first.y - normalizedVent2.y * vent2->first.x;
 
 					//On a juste a résoudre l'équation mx + p = m'x + p' pour trouver le x, puis le y
 					Position inter;
@@ -223,7 +227,10 @@ int main() {
 					//On vérifie que le point appartient bien aux deux segments
 					//Pour ça, on regarde la position x du point d'intersections et des droites
 					if (vent1->first.x <= inter.x && inter.x <= vent1->second.x && vent2->first.x <= inter.x && inter.x <= vent2->second.x) {
-						diagIntersections.insert(inter);
+						//On vérifie que l'intersection soit bien sur la grille
+						if (int(inter.x) == inter.x) {
+							diagIntersections.insert(inter);
+						}
 					}
 				}
 			}
@@ -233,7 +240,7 @@ int main() {
 				//Pour ça on a deux cas, soit les droites sont "orthogonales" dans quel cas c'est pareil à la part 1
 				if (dirVent1 != Directions::nonOrthogonal) {
 					//On regarde la partie qui n'est pas égale, pInter correspond au plus tard début et à la plus tôt fin
-					std::pair<std::int32_t*, std::int32_t*> pInter;
+					std::pair<float*, float*> pInter;
 
 					if (dirVent1 == Directions::xStraight) {
 						if (vent1->first.y > vent2->first.y) {
@@ -269,13 +276,13 @@ int main() {
 					//Maintenant, les intersections sont tous les points tels que on commence au début de p2 et on aille à la fin de p1
 					//On vérifie avant le sens, et si les droites sont potentiellement superposés
 					if (dirVent1 == Directions::xStraight && vent1->first.x == vent2->first.x) {
-						for (std::int32_t _y = *pInter.first; _y <= *pInter.second; _y++) {
+						for (float _y = *pInter.first; _y <= *pInter.second; _y++) {
 							simpleIntersections.insert(Position(vent1->first.x, _y));
 							diagIntersections.insert(Position(vent1->first.x, _y));
 						}
 					}
 					else if (dirVent1 == Directions::yStraight && vent1->first.y == vent2->first.y) {
-						for (std::int32_t _x = *pInter.first; _x <= *pInter.second; _x++) {
+						for (float _x = *pInter.first; _x <= *pInter.second; _x++) {
 							simpleIntersections.insert(Position(_x, vent1->first.y));
 							diagIntersections.insert(Position(_x, vent1->first.y));
 						}
@@ -286,7 +293,7 @@ int main() {
 					//Dans ce cas on cherche d'abord à savoir si les droites sont confondues, on cherche le m et le p de la première
 					//Le m est le y de normalizedVent1
 					//Le p peut se calculer
-					std::int32_t p = vent1->first.y - normalizedVent1.y * vent1->first.x;
+					float p = vent1->first.y - normalizedVent1.y * vent1->first.x;
 
 					//Maintenant, on regarde si avec l'équation de la première droite y = mx + p, avec le x d'un point de la second on arrive bien au y de ce même point
 					if (vent2->first.y == normalizedVent1.y * vent2->first.x + p) {
@@ -317,8 +324,12 @@ int main() {
 		}
 	}
 
+	//On finit le temps
+	auto endTime = std::chrono::steady_clock::now();
+
 	std::cout << "Part 1: " << simpleIntersections.size() << std::endl;
 	std::cout << "Part 2: " << diagIntersections.size() << std::endl;
+	std::cout << "Time: " << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() << " microseconds" << std::endl;
 
 	//Pour le debut (vérification des points)
 	/*

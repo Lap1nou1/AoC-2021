@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdint>
 #include <numeric>
+#include <chrono>
 
 struct Node {
 	std::uint16_t value;	//Valeur du noeud
@@ -119,6 +120,9 @@ void printLinked(LinkedSortedVector& v) {
 }
 
 int main() {
+	//On commence le temps
+	auto start = std::chrono::steady_clock::now();
+
 	//On charge le fichier 
 	std::ifstream inputFile("input.txt");
 
@@ -185,9 +189,12 @@ int main() {
 			sumDistancePart2 = newSum;
 	}
 
+	//On finit le temps
+	auto end = std::chrono::steady_clock::now();
 
-	std::cout << sumDistancePart1 << std::endl;
-	std::cout << sumDistancePart2 << std::endl;
+	std::cout << "Part 1: " << sumDistancePart1 << std::endl;
+	std::cout << "Part 2: " << sumDistancePart2 << std::endl;
+	std::cout << "Time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds" << std::endl;
 
 	return 0;
 }
